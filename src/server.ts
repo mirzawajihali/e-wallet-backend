@@ -58,3 +58,6 @@ process.on('unhandledRejection', (err) => {
     console.error('Unhandled Rejection:', err);
     gracefulShutdown('UNHANDLED_REJECTION');
 });
+
+// Start the server
+startServer();
