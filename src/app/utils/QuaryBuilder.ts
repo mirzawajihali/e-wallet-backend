@@ -1,11 +1,23 @@
 import { Query } from "mongoose";
 import { excludeField } from "./constants";
 
+interface QueryParams {
+    page?: string;
+    limit?: string;
+    sort?: string;
+    fields?: string;
+    searchTerm?: string;
+    [key: string]: string | undefined;
+}
+
+
+
+
 export class QueryBuilder<T> {
     public modelQuery: Query<T[], T>;
-    public readonly query: Record<string, string>
+    public readonly query: QueryParams
 
-    constructor(modelQuery: Query<T[], T>, query: Record<string, string>) {
+    constructor(modelQuery: Query<T[], T>, query:QueryParams) {
         this.modelQuery = modelQuery;
         this.query = query;
     }
@@ -25,6 +37,9 @@ export class QueryBuilder<T> {
     }
 
     search(searchableField: string[]): this {
+          if (!searchableField.length) {
+        return this;
+    }
         const searchTerm = this.query.searchTerm || ""
         const searchQuery = {
             $or: searchableField.map(field => ({ [field]: { $regex: searchTerm, $options: "i" } }))
@@ -64,14 +79,22 @@ export class QueryBuilder<T> {
         return this.modelQuery
     }
 
-    async getMeta() {
-        const totalDocuments = await this.modelQuery.model.countDocuments()
+   async getMeta() {
+    // Create a separate query for counting that excludes pagination
+    const countQuery = this.modelQuery.model.find(this.modelQuery.getFilter());
+    const totalDocuments = await countQuery.countDocuments();
 
-        const page = Number(this.query.page) || 1
-        const limit = Number(this.query.limit) || 10
+    const page = Number(this.query.page) || 1;
+    const limit = Number(this.query.limit) || 10;
+    const totalPage = Math.ceil(totalDocuments / limit);
 
-        const totalPage = Math.ceil(totalDocuments / limit)
-
-        return { page, limit, total: totalDocuments, totalPage }
-    }
+    return { 
+        page, 
+        limit, 
+        total: totalDocuments, 
+        totalPage,
+        hasNextPage: page < totalPage,
+        hasPrevPage: page > 1
+    };
+}
 }
