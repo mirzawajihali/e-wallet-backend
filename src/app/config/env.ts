@@ -8,7 +8,11 @@ interface EnvConfig {
     MONGO_URI: string ,
     NODE_ENV: 'development' | 'production' ,
     BCRYPT_SALT_ROUNDS?: string; 
-    GOOGLE_CALLBACK_URL : string, GOOGLE_CLIENT_SECRET : string, GOOGLE_CLIENT_ID : string
+    GOOGLE_CALLBACK_URL : string, GOOGLE_CLIENT_SECRET : string, GOOGLE_CLIENT_ID : string,
+      JWT_ACCESS_SECRET: string;
+    JWT_ACCESS_EXPIRES: string;
+    JWT_REFRESH_SECRET: string;
+    JWT_REFRESH_EXPIRES: string; 
     // Optional, as it may not be defined in all environments
 }
 
