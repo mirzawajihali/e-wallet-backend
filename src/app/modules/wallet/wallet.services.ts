@@ -5,6 +5,7 @@ import { Wallet } from "./wallet.model";
 import { TransactionStatus, TransactionType } from "../transaction/transaction.interface";
 import { Transaction } from "../transaction/transaction.model";
 import { User } from "../user/user.model";
+import { QueryBuilder } from "../../utils/QuaryBuilder";
 class WalletService {
     async getMyWallet(userId : string){
         const wallet = await Wallet.findOne({userId}).populate('userId', 'name email role');
@@ -101,20 +102,20 @@ class WalletService {
      
 }
 
-        async sendMoney(fromUserId : string, toUserId: string, amount : number){
+        async sendMoney(fromUserId : string, toUserEmail: string, amount : number){
         const session = await mongoose.startSession();
         try{;
 
             session.startTransaction();
             // now have to find receiver by id
 
-            const toUser = await User.findOne({toUserId}).session(session);
+            const toUser = await User.findOne({email : toUserEmail}).session(session);
             if(!toUser){
                 throw new AppError(httpStatus.NOT_FOUND, "Receiver not found");
             }
 
             const fromWallet = await Wallet.findOne({userId: fromUserId}).session(session);
-            const toWallet = await Wallet.findOne({userId: toUserId}).session(session);
+            const toWallet = await Wallet.findOne({userId: toUser._id}).session(session);
             if(!fromWallet || !toWallet){
                 throw new AppError(httpStatus.NOT_FOUND, "Wallet not found");
             }
@@ -141,7 +142,7 @@ class WalletService {
             }], { session });
 
             await session.commitTransaction();
-            console.log(`✅ Money sent: ${amount} from user ${fromUserId} to user ${toUserId}`);
+            console.log(`✅ Money sent: ${amount} from user ${fromUserId} to user ${toUserEmail}`);
             return { fromWallet, toWallet };
         }
         catch(error){
@@ -155,4 +156,109 @@ class WalletService {
         }
 
 
+
+       async cashIn(agentId : string , userEmail : string , amount : number){
+        const session = await mongoose.startSession();
+        try{
+            session.startTransaction();
+            const user = await User.findOne({email: userEmail}).session(session);
+            if(!user){
+                throw new AppError(httpStatus.NOT_FOUND, "User not found");
+            }
+            const userWallet = await Wallet.findOne({userId: user._id}).session(session);
+            if(!userWallet){
+                throw new AppError(httpStatus.NOT_FOUND, "User wallet not found");
+            }
+            userWallet.balance += amount;
+            await userWallet.save({session});
+
+            await Transaction.create([{
+                type: TransactionType.CASH_IN,
+                amount,
+                toWallet: userWallet._id,
+                initiatedBy: agentId,
+                status: TransactionStatus.COMPLETED,
+                description: `Cash in of ৳${amount} by agent ${agentId}`
+            }], { session });
+
+            await session.commitTransaction();
+            console.log(`✅ Cash in of ৳${amount} for user ${userEmail} by agent ${agentId}`);
+            return userWallet;
+        }
+        catch(error){
+            await session.abortTransaction();
+            console.error('❌ Failed to cash in:', error);
+            throw error;
+        }
+        finally {
+            session.endSession();
+        }
+
+        
 }
+            async CashOut(agentId : string , userEmail : string , amount : number){
+
+                const session = await mongoose.startSession();
+                try{
+                    session.startTransaction();
+                    const user = await User.findOne({email: userEmail}).session(session);
+                    if(!user){
+                        throw new AppError(httpStatus.NOT_FOUND, "User not found");
+                    }
+                    const userWallet = await Wallet.findOne({userId: user._id}).session(session);
+                    if(!userWallet){
+                        throw new AppError(httpStatus.NOT_FOUND, "User wallet not found");
+                    }
+                    if(userWallet.balance < amount){
+                        throw new AppError(httpStatus.BAD_REQUEST, "Insufficient balance");
+                    }
+                    userWallet.balance -= amount;
+                    await userWallet.save({session});
+
+                    await Transaction.create([{
+                        type: TransactionType.CASH_OUT,
+                        amount,
+                        fromWallet: userWallet._id,
+                        initiatedBy: agentId,
+                        status: TransactionStatus.COMPLETED,
+                        description: `Cash out of ৳${amount} by agent ${agentId}`
+                    }], { session });
+
+                    await session.commitTransaction();
+                    console.log(`✅ Cash out of ৳${amount} for user ${userEmail} by agent ${agentId}`);
+                    return userWallet;
+                }
+                catch(error){
+                    await session.abortTransaction();
+                    console.error('❌ Failed to cash out:', error);
+                    throw error;
+                }
+                finally {
+                    session.endSession();
+                }
+
+            }
+
+
+            // Admin: Get all wallets
+    async getAllWallets(query: Record<string, string>) {
+        const queryBuilder = new QueryBuilder(
+            Wallet.find().populate('userId', 'name email role'), 
+            query
+        );
+        
+        const walletsData = queryBuilder
+            .filter()
+            .sort()
+            .fields()
+            .paginate();
+
+        const [data, meta] = await Promise.all([
+            walletsData.build(),
+            queryBuilder.getMeta()
+        ]);
+
+        return { data, meta };
+    }
+
+        }
