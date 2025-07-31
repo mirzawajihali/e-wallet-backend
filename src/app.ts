@@ -16,16 +16,7 @@ app.get('/', (req : Request, res : Response) => {
     res.send('Hello World');
 });
 
-app.post('/test', (req: Request, res: Response) => {
-    console.log('Test endpoint - Headers:', req.headers);
-    console.log('Test endpoint - Body:', req.body);
-    res.json({
-        success: true,
-        message: 'Body parsing test',
-        receivedBody: req.body,
-        contentType: req.headers['content-type']
-    });
-});
+
 
 // Register API routes
 app.use('/api/v1', router);

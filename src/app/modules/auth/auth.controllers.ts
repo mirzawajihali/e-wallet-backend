@@ -1,13 +1,17 @@
-import passport from "passport";
-import AppError from "../../errorHelpers/AppError";
-import httpStatus from 'http-status-codes';
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { catchAsync } from "../../utils/catchAsync";
-import { createUserTokens } from "../../utils/UserTokens";
+import { NextFunction, Request, Response } from "express";
+import httpStatus from "http-status-codes";
 import { sendResponse } from "../../utils/sendResponse";
+import { authServices } from "./auth.services";
+import AppError from "../../errorHelpers/AppError";
 import { setAuthCookie } from "../../utils/AuthCookie";
-import { Request, Response, NextFunction } from "express";
+import { JwtPayload } from "jsonwebtoken";
+import { createUserTokens } from "../../utils/UserTokens";
+import { env } from "../../config/env";
+import passport from "passport";
 
-
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const credentialsLogin =  catchAsync(async (req: Request, res: Response, next: NextFunction) => {
 
     // const loginInfo = await authServices.credentialsLogin(req.body)
@@ -39,12 +43,112 @@ const credentialsLogin =  catchAsync(async (req: Request, res: Response, next: N
     })  
     })(req, res, next) 
    
+    // res.cookie('refreshToken', loginInfo.refreshToken, {
+    //     httpOnly: true,
+       
+    //     secure : false,
+    // })
     
+    // res.cookie('accessToken', loginInfo.accessToken, {
+    //     httpOnly: true,
+       
+    //     secure : false,
+    // })
 
    
 })
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const getNewAccessToken =  catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    const refreshToken = req.cookies.refreshToken;
+     if(!refreshToken){
+        throw new AppError(httpStatus.BAD_REQUEST, "Refresh token not found");
+    }
+    const tokenInfo = await authServices.getNewAccessToken(refreshToken as string);
 
+    //    res.cookie('accessToken', tokenInfo.accessToken, {
+    //     httpOnly: true,
+       
+    //     secure : false,
+    // })
+   setAuthCookie(res, tokenInfo);
+   
+    
+    sendResponse(res, {
+        success: true,
+        statusCode: httpStatus.CREATED,
+        message: "New access token retrived Successfully",
+        data : tokenInfo,
+    })
+})
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const logout =  catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    
+    res.clearCookie('refreshToken', {
+        httpOnly : true,
+        secure : false,
+        sameSite : "lax"
+    });
+    
+    res.clearCookie('accessToken', {
+        httpOnly : true,
+        secure : false,
+        sameSite : "lax"
+    });
+    
+    sendResponse(res, {
+        success: true,
+        statusCode: httpStatus.CREATED,
+        message: "Log out Successfully",
+        data : null,
+    })
+})
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const resetPassword =  catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    
+   
+
+    const newPassword = req.body.newPassword;
+
+    const oldPassword = req.body.oldPassword;
+    const decodedToken = req.user;
+
+
+     await authServices.resetPassword(oldPassword, newPassword, decodedToken as JwtPayload);
+   
+    
+    sendResponse(res, {
+        success: true,
+        statusCode: httpStatus.CREATED,
+        message: "password changed succesfully Successfully",
+        data : null,
+    })
+})
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const googleCallbackController =  catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    
+
+    let redirectTo = req.query.state ? req.query.state as string : "" as string;
+
+    if(redirectTo.startsWith("/")){
+        redirectTo = redirectTo.slice(1);
+    }
+   
+    const user = req.user;
+    if(!user){
+        throw new AppError(httpStatus.BAD_REQUEST, "User not found");
+    }
+    const tokenInfo =  createUserTokens(user );
+    setAuthCookie(res, tokenInfo);
+
+    res.redirect(`${env.FRONTEND_URL}/${redirectTo}`); // Redirect to the frontend with tokens
+})
 
 export const AuthControllers = {
-    credentialsLogin
-};
+    credentialsLogin,
+    getNewAccessToken,
+    logout,
+    resetPassword,
+    googleCallbackController
+    
+}
