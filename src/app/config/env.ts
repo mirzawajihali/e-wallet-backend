@@ -7,12 +7,14 @@ interface EnvConfig {
     PORT: string,
     MONGO_URI: string ,
     NODE_ENV: 'development' | 'production' ,
-    BCRYPT_SALT_ROUNDS?: string; // Optional, as it may not be defined in all environments
+    BCRYPT_SALT_ROUNDS?: string; 
+    GOOGLE_CALLBACK_URL : string, GOOGLE_CLIENT_SECRET : string, GOOGLE_CLIENT_ID : string
+    // Optional, as it may not be defined in all environments
 }
 
 
 const loadEnvVariables = () : EnvConfig => {
-    const requiredEnvVars : string [] = ['PORT', 'MONGO_URI', 'NODE_ENV', 'BCRYPT_SALT_ROUNDS'];
+    const requiredEnvVars : string [] = ['PORT', 'MONGO_URI', 'NODE_ENV', 'BCRYPT_SALT_ROUNDS', "GOOGLE_CALLBACK_URL", "GOOGLE_CLIENT_SECRET", "GOOGLE_CLIENT_ID"];
 
     requiredEnvVars.forEach((envVar) =>{
         if(!process.env[envVar]){
@@ -25,7 +27,10 @@ const loadEnvVariables = () : EnvConfig => {
         PORT: process.env.PORT as string,
     MONGO_URI: process.env.MONGO_URI  as string,
     NODE_ENV: process.env.NODE_ENV as "development" | "production",
-    BCRYPT_SALT_ROUNDS: process.env.BCRYPT_SALT_ROUNDS
+    BCRYPT_SALT_ROUNDS: process.env.BCRYPT_SALT_ROUNDS,
+      GOOGLE_CALLBACK_URL: process.env.GOOGLE_CALLBACK_URL as string,
+    GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET as string,
+    GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID as string
 
     }
 }
