@@ -1,5 +1,4 @@
 import dotenv from 'dotenv';
-import th from 'zod/v4/locales/th.cjs';
 
 dotenv.config();
 
@@ -18,7 +17,7 @@ interface EnvConfig {
 
 
 const loadEnvVariables = () : EnvConfig => {
-    const requiredEnvVars : string [] = ['PORT', 'MONGO_URI', 'NODE_ENV', 'BCRYPT_SALT_ROUNDS', "GOOGLE_CALLBACK_URL", "GOOGLE_CLIENT_SECRET", "GOOGLE_CLIENT_ID"];
+    const requiredEnvVars : string [] = ['PORT', 'MONGO_URI', 'NODE_ENV', 'BCRYPT_SALT_ROUNDS', "GOOGLE_CALLBACK_URL", "GOOGLE_CLIENT_SECRET", "GOOGLE_CLIENT_ID", 'JWT_ACCESS_SECRET', 'JWT_ACCESS_EXPIRES', 'JWT_REFRESH_SECRET', 'JWT_REFRESH_EXPIRES'];
 
     requiredEnvVars.forEach((envVar) =>{
         if(!process.env[envVar]){
@@ -29,13 +28,16 @@ const loadEnvVariables = () : EnvConfig => {
 
     return {
         PORT: process.env.PORT as string,
-    MONGO_URI: process.env.MONGO_URI  as string,
-    NODE_ENV: process.env.NODE_ENV as "development" | "production",
-    BCRYPT_SALT_ROUNDS: process.env.BCRYPT_SALT_ROUNDS,
-      GOOGLE_CALLBACK_URL: process.env.GOOGLE_CALLBACK_URL as string,
-    GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET as string,
-    GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID as string
-
+        MONGO_URI: process.env.MONGO_URI  as string,
+        NODE_ENV: process.env.NODE_ENV as "development" | "production",
+        BCRYPT_SALT_ROUNDS: process.env.BCRYPT_SALT_ROUNDS,
+        GOOGLE_CALLBACK_URL: process.env.GOOGLE_CALLBACK_URL as string,
+        GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET as string,
+        GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID as string,
+        JWT_ACCESS_SECRET: process.env.JWT_ACCESS_SECRET as string,
+        JWT_ACCESS_EXPIRES: process.env.JWT_ACCESS_EXPIRES as string,
+        JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET as string,
+        JWT_REFRESH_EXPIRES: process.env.JWT_REFRESH_EXPIRES as string
     }
 }
 
