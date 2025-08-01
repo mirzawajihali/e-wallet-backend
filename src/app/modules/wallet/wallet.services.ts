@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import AppError from "../../errorHelpers/AppError";
 import  httpStatus from "http-status-codes";
-import { Wallet } from "./wallet.model";
+import { Wallet } from './wallet.model';
 import { TransactionStatus, TransactionType } from "../transaction/transaction.interface";
 import { Transaction } from "../transaction/transaction.model";
 import { User } from "../user/user.model";
@@ -261,4 +261,38 @@ class WalletService {
         return { data, meta };
     }
 
+    async blockWallet(walletId : string){
+       const wallet = await Wallet.findByIdAndUpdate(
+            walletId, 
+            { isBlocked: true }, 
+            { new: true }
+        ).populate('userId', 'name email');
+        
+        if (!wallet) {
+            throw new AppError(httpStatus.NOT_FOUND, 'Wallet not found');
         }
+        
+        console.log(` Wallet blocked: ${walletId}`);
+        return wallet;
+
+    }
+
+    async unblockWallet(walletId: string) {
+        const wallet = await Wallet.findByIdAndUpdate(
+            walletId, 
+            { isBlocked: false }, 
+            { new: true }
+        ).populate('userId', 'name email');
+        
+        if (!wallet) {
+            throw new AppError(httpStatus.NOT_FOUND, 'Wallet not found');
+        }
+        
+        console.log(`✅ Wallet unblocked: ${walletId}`);
+        return wallet;
+    }
+
+        }
+
+        
+export const walletService = new WalletService();
