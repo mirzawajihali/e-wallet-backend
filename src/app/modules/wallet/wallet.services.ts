@@ -8,16 +8,12 @@ import { User } from "../user/user.model";
 import { QueryBuilder } from "../../utils/QuaryBuilder";
 
 class WalletService {
-    async getMyWallet(userId: string) {
-        console.log('🔍 Debug - Received userId:', userId);
-        console.log('🔍 Debug - userId type:', typeof userId);
-        
+    async getMyWallet(userId: mongoose.Types.ObjectId) {
+      
         // Convert string to ObjectId for proper MongoDB query
-        const objectId = new mongoose.Types.ObjectId(userId);
-        console.log('🔍 Debug - Converted ObjectId:', objectId);
         
-        const wallet = await Wallet.findOne({ userId: objectId }).populate('userId', 'name email role');
-        console.log('🔍 Debug - Found wallet:', wallet ? 'YES' : 'NO');
+       
+        const wallet = await Wallet.findOne({ userId }).populate('userId', 'name email role');
         
         if (!wallet) {
             throw new AppError(httpStatus.NOT_FOUND, "Wallet not found");
@@ -25,14 +21,14 @@ class WalletService {
         return wallet;
     }
 
-    async addMoney(userId: string, amount: number) {
+    async addMoney(userId: mongoose.Types.ObjectId, amount: number) {
         const session = await mongoose.startSession();
         try {
             session.startTransaction();
             
             // Convert string to ObjectId
-            const objectId = new mongoose.Types.ObjectId(userId);
-            const wallet = await Wallet.findOne({ userId: objectId }).session(session);
+            
+            const wallet = await Wallet.findOne({ userId }).session(session);
             
             if (!wallet) {
                 throw new AppError(httpStatus.NOT_FOUND, "Wallet not found");
@@ -45,7 +41,7 @@ class WalletService {
                 type: TransactionType.DEPOSIT,
                 amount,
                 toWallet: wallet._id,
-                initiatedBy: objectId,
+                initiatedBy: userId,
                 status: TransactionStatus.COMPLETED,
                 description: `Added ৳${amount} to wallet`
             }], { session });
@@ -63,14 +59,14 @@ class WalletService {
     }
 
 
-    async withdrawMoney(userId: string, amount: number) {
+    async withdrawMoney(userId: mongoose.Types.ObjectId, amount: number) {
         const session = await mongoose.startSession();
         try {
             session.startTransaction();
             
             // Convert string to ObjectId
-            const objectId = new mongoose.Types.ObjectId(userId);
-            const wallet = await Wallet.findOne({ userId: objectId }).session(session);
+           
+            const wallet = await Wallet.findOne({ userId }).session(session);
             
             if (!wallet) {
                 throw new AppError(httpStatus.NOT_FOUND, "Wallet not found");
@@ -87,7 +83,7 @@ class WalletService {
                 type: TransactionType.WITHDRAW,
                 amount,
                 fromWallet: wallet._id,
-                initiatedBy: objectId,
+                initiatedBy: userId,
                 status: TransactionStatus.COMPLETED,
                 description: 'Money withdrawn from wallet'
             }], { session });
@@ -104,21 +100,18 @@ class WalletService {
         }
     }
 
-    async sendMoney(fromUserId: string, toUserEmail: string, amount: number) {
+    async sendMoney(fromUserId: mongoose.Types.ObjectId, toUserEmail: string, amount: number) {
         const session = await mongoose.startSession();
         try {
             session.startTransaction();
             
-            // Convert string to ObjectId
-            const fromObjectId = new mongoose.Types.ObjectId(fromUserId);
-            
-            // Find receiver by email
+           
             const toUser = await User.findOne({ email: toUserEmail }).session(session);
             if (!toUser) {
                 throw new AppError(httpStatus.NOT_FOUND, "Receiver not found");
             }
 
-            const fromWallet = await Wallet.findOne({ userId: fromObjectId }).session(session);
+            const fromWallet = await Wallet.findOne({ userId: fromUserId }).session(session);
             const toWallet = await Wallet.findOne({ userId: toUser._id }).session(session);
             
             if (!fromWallet || !toWallet) {
@@ -141,7 +134,7 @@ class WalletService {
                 amount,
                 fromWallet: fromWallet._id,
                 toWallet: toWallet._id,
-                initiatedBy: fromObjectId,
+                initiatedBy: fromUserId,
                 status: TransactionStatus.COMPLETED,
                 description: `Money sent to ${toUser.email}`
             }], { session });
@@ -160,14 +153,12 @@ class WalletService {
 
 
 
-    async cashIn(agentId: string, userEmail: string, amount: number) {
+    async cashIn(agentId: mongoose.Types.ObjectId, userEmail: string, amount: number) {
         const session = await mongoose.startSession();
         try {
             session.startTransaction();
             
-            // Convert string to ObjectId
-            const agentObjectId = new mongoose.Types.ObjectId(agentId);
-            
+        
             const user = await User.findOne({ email: userEmail }).session(session);
             if (!user) {
                 throw new AppError(httpStatus.NOT_FOUND, "User not found");
@@ -185,7 +176,7 @@ class WalletService {
                 type: TransactionType.CASH_IN,
                 amount,
                 toWallet: userWallet._id,
-                initiatedBy: agentObjectId,
+                initiatedBy: agentId,
                 status: TransactionStatus.COMPLETED,
                 description: `Cash in of ৳${amount} by agent ${agentId}`
             }], { session });
@@ -201,14 +192,12 @@ class WalletService {
             session.endSession();
         }
     }
-    async CashOut(agentId: string, userEmail: string, amount: number) {
+    async CashOut(agentId: mongoose.Types.ObjectId, userEmail: string, amount: number) {
         const session = await mongoose.startSession();
         try {
             session.startTransaction();
-            
+
             // Convert string to ObjectId
-            const agentObjectId = new mongoose.Types.ObjectId(agentId);
-            
             const user = await User.findOne({ email: userEmail }).session(session);
             if (!user) {
                 throw new AppError(httpStatus.NOT_FOUND, "User not found");
@@ -230,7 +219,7 @@ class WalletService {
                 type: TransactionType.CASH_OUT,
                 amount,
                 fromWallet: userWallet._id,
-                initiatedBy: agentObjectId,
+                initiatedBy: agentId,
                 status: TransactionStatus.COMPLETED,
                 description: `Cash out of ৳${amount} by agent ${agentId}`
             }], { session });
