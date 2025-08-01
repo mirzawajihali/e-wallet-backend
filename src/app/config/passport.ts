@@ -11,37 +11,38 @@ import bcryptjs from "bcryptjs";
 
 passport.use(
     new LocalStrategy({
-        usernameField : "email",
-        passwordField : "password"
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    }, async(email: string, password: string, done: any)=>{
-        try{
-            const isUserExist = await User.findOne({email}) ;
-            if(!isUserExist){
-                return done("User not found");
+        usernameField: "email",
+        passwordField: "password"
+    }, async (email: string, password: string, done: any) => {
+        try {
+            const isUserExist = await User.findOne({ email });
+            if (!isUserExist) {
+             
+                return done(null, false, { message: "User not found" });
             }
 
             const isGoogleAuthenticated = isUserExist.auths.some(auth => auth.provider === "google");
 
-            if(isGoogleAuthenticated && !isUserExist.password){
-                return done(null, false, {message : "your account is connected with Google. Please login with Google. If you want to login with credentials then login with google then set a password for your gmail "});
+            if (isGoogleAuthenticated && !isUserExist.password) {
+                return done(null, false, { 
+                    message: "Your account is connected with Google. Please login with Google." 
+                });
             }
-            
-            const isPassWordMatched = await bcryptjs.compare(password as string, isUserExist.password as string);
-    
 
-         if(!isPassWordMatched){
-                    throw new AppError(httpStatus.UNAUTHORIZED, "Invalid passward (doesnt match)");
-    }
+            const isPasswordMatched = await bcryptjs.compare(password, isUserExist.password as string);
 
-    return done(null, isUserExist);
-        
-}
-        catch(error){
-            done(error);
+            if (!isPasswordMatched) {
+                
+                return done(null, false, { message: "Invalid password" });
+            }
+
+            return done(null, isUserExist);
+
+        } catch (error) {
+            return done(error);
         }
     })
-)
+);
 
 
 
@@ -66,7 +67,6 @@ passport.use(
         done: VerifyCallback
     ) => {
         try {
-
             const email = profile.emails?.[0]?.value;
             if (!email) {
                 return done(null, false, { message: "No email found in Google profile" });
@@ -74,46 +74,52 @@ passport.use(
 
             let user = await User.findOne({email});
             if(!user){
-                user = await User.create({
-                    email,
-                    name: profile.displayName ,
-                    picture : profile.photos?.[0]?.value,
-                    role : Role.USER,
-                    isVarified: true,
-                    auths :[
-                        {
-                            provider : "google",
-                            providerId : profile.id
-                        }
-                    ]
-            })
+                // Import necessary modules for wallet creation
+                const mongoose = require('mongoose');
+                const { Wallet } = require('../modules/wallet/wallet.model');
+                
+                const session = await mongoose.startSession();
+                
+                try {
+                    session.startTransaction();
+                    
+                    // Create user
+                    const [newUser] = await User.create([{
+                        email,
+                        name: profile.displayName,
+                        picture: profile.photos?.[0]?.value,
+                        role: Role.USER,
+                        isVarified: true,
+                        auths: [{
+                            provider: "google",
+                            providerId: profile.id
+                        }]
+                    }], { session });
 
-            
-        }
-        return done(null, user);
-    }
+                    // Create wallet for Google user
+                    await Wallet.create([{
+                        userId: newUser._id,
+                        balance: 50,
+                        isBlocked: false
+                    }], { session });
 
-        catch (error) {
+                    await session.commitTransaction();
+                    user = newUser;
+                    console.log(`✅ Google user created with wallet: ${email}`);
+                    
+                } catch (error) {
+                    await session.abortTransaction();
+                    console.error('❌ Google user creation failed:', error);
+                    throw error;
+                } finally {
+                    session.endSession();
+                }
+            }
+            return done(null, user);
+
+        } catch (error) {
             console.log("Error in Google Strategy:", error);
             return done(error);
         }
-        
-    }
-))
-
-// Since we're using session: false, we don't need serialize/deserialize
-// Remove or comment out the following:
-
-// passport.serializeUser((user : any, done : (err : any, id ?: unknown) => void) => {
-//     done(null, user._id);
-// });
-
-// passport.deserializeUser(async (id : string, done :  any) => {
-//     try{
-//         const user = await User.findById(id);
-//         done(null, user);
-//     }
-//     catch(error){
-//         done(error);
-//     }
-// })
+    })
+)

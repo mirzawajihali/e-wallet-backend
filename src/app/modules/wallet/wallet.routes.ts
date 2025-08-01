@@ -25,6 +25,7 @@ router.post('/withdraw',
     WalletControllers.withdraw
 );
 
+
 router.post('/send-money', 
     checkAuth(Role.USER), 
     ValidateRequest(walletValidation.sendMoney), 
@@ -59,5 +60,7 @@ router.patch('/unblock/:walletId',
     checkAuth(Role.ADMIN), 
     WalletControllers.unblockWallet
 );
+
+
 
 export const WalletRoutes = router;
