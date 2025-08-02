@@ -2,6 +2,7 @@ import { Server } from "http";
 import { env } from "./app/config/env";
 import mongoose from "mongoose";
 import app from "./app";
+import { seedMainAdmin } from "./app/utils/MainAdmin";
 
 let server : Server;
 
@@ -18,6 +19,11 @@ const startServer= async () => {
         console.log(error);
     }
 }
+
+(async () =>{
+    await startServer();
+    await seedMainAdmin();
+}) ();
 
 const gracefulShutdown = (signal: string) => {
     console.log(`${signal} received: starting graceful shutdown`);
@@ -60,4 +66,3 @@ process.on('unhandledRejection', (err) => {
 });
 
 // Start the server
-startServer();
