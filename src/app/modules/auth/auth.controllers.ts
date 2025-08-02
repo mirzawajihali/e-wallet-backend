@@ -3,7 +3,7 @@ import { catchAsync } from "../../utils/catchAsync";
 import { NextFunction, Request, Response } from "express";
 import httpStatus from "http-status-codes";
 import { sendResponse } from "../../utils/sendResponse";
-import { authServices } from "./auth.services";
+import { authService } from "./auth.services";  // Updated import
 import AppError from "../../errorHelpers/AppError";
 import { setAuthCookie } from "../../utils/AuthCookie";
 import { JwtPayload } from "jsonwebtoken";
@@ -63,7 +63,7 @@ const getNewAccessToken =  catchAsync(async (req: Request, res: Response, next: 
      if(!refreshToken){
         throw new AppError(httpStatus.BAD_REQUEST, "Refresh token not found");
     }
-    const tokenInfo = await authServices.getNewAccessToken(refreshToken as string);
+    const tokenInfo = await authService.getNewAccessToken(refreshToken as string);  // Updated method call
 
     //    res.cookie('accessToken', tokenInfo.accessToken, {
     //     httpOnly: true,
@@ -114,7 +114,7 @@ const resetPassword =  catchAsync(async (req: Request, res: Response, next: Next
     const decodedToken = req.user;
 
 
-     await authServices.resetPassword(oldPassword, newPassword, decodedToken as JwtPayload);
+     await authService.resetPassword(oldPassword, newPassword, decodedToken as JwtPayload);  // Updated method call
    
     
     sendResponse(res, {

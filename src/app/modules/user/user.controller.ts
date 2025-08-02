@@ -1,13 +1,13 @@
 import { catchAsync } from "../../utils/catchAsync"
 import { sendResponse } from "../../utils/sendResponse"
-import { userServices } from "./user.services"
+import { userService } from "./user.services"  // Updated import to use singleton instance
 import { NextFunction, Request, Response } from "express";
 import httpStatus from "http-status-codes";
 
 
 
 const createUser = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-    const user = await userServices.createUser(req.body)
+    const user = await userService.createUser(req.body)  // Updated method call
 
     
 
@@ -21,7 +21,7 @@ const createUser = catchAsync(async (req: Request, res: Response, next: NextFunc
 
 const getAllUsers = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     const query = req.query;
-    const result = await userServices.getAllUsers(query as Record<string, string>);
+    const result = await userService.getAllUsers(query as Record<string, string>);  // Updated method call
 
   
     sendResponse(res, {
