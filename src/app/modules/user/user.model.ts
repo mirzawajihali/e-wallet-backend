@@ -23,6 +23,7 @@ const userSchema = new Schema<IUser>({
         type : String,
         enum : Object.values(Role),
         default : Role.USER
+        
     },
     phone : {type : String},
     picture : {type : String},

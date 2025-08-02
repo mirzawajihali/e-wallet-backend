@@ -10,7 +10,9 @@ const router = Router();
 
 router.post("/register", ValidateRequest(createUserZodSchema), userController.createUser);
 router.patch("/:id", ValidateRequest(updateUserZodSchema), checkAuth(...Object.values(Role)), userController.updateUser);
-router.get("/",checkAuth("ADMIN"), userController.getAllUsers);
+router.patch("/promote-to-agent/:userId", checkAuth(Role.ADMIN), userController.promoteToAgent);
+router.get("/", checkAuth("ADMIN"), userController.getAllUsers);
+router.get("/agents", checkAuth(Role.ADMIN), userController.getAllAgents);
 
 
 

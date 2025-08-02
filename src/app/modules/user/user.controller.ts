@@ -30,6 +30,31 @@ const updateUser = catchAsync(async (req: Request, res: Response, next: NextFunc
     });
 })
 
+const promoteToAgent = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    const { userId } = req.params;
+    const promotedUser = await userService.promoteToAgent(userId);
+
+    sendResponse(res, {
+        success: true,
+        statusCode: httpStatus.OK,
+        message: "User promoted to agent successfully",
+        data: promotedUser,
+    });
+})
+
+const getAllAgents = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    const query = req.query;
+    const result = await userService.getAllAgents(query as Record<string, string>);
+
+    sendResponse(res, {
+        success: true,
+        statusCode: httpStatus.OK,
+        message: "All Agents Retrieved Successfully",
+        data: result.data,
+        meta: result.meta
+    })
+})
+
 const getAllUsers = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     const query = req.query;
     const result = await userService.getAllUsers(query as Record<string, string>);  // Updated method call
@@ -46,6 +71,8 @@ const getAllUsers = catchAsync(async (req: Request, res: Response, next: NextFun
 
 export const userController = {
     createUser,
-    updateUser,  // Added the missing updateUser method
+    updateUser,
+    promoteToAgent,
+    getAllAgents,    // Added the getAllAgents method
     getAllUsers
 }

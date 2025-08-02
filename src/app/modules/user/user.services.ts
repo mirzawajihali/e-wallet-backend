@@ -81,30 +81,8 @@ async updateUser(userId: string, payload: Partial<IUser>, decodedToken: { role: 
         throw new AppError(httpStatus.NOT_FOUND, "User not found");
     }
 
-    // Role update authorization
-    if (payload.role) {
-        // Only SUPER_ADMIN can update roles
-        if (decodedToken.role !== Role.ADMIN) {
-            throw new AppError(httpStatus.FORBIDDEN, "Only Super Admin can update user roles");
-        }
+   
 
-        // Prevent SUPER_ADMIN from downgrading themselves
-        if (decodedToken.user_id === userId && payload.role !== Role.ADMIN) {
-            throw new AppError(httpStatus.FORBIDDEN, "Super Admin cannot downgrade their own role");
-        }
-    }
-
-    // Status update authorization (isActive, isVarified, isDeleted)
-    if (
-        payload.isActive !== undefined ||
-        payload.isVarified !== undefined ||
-        payload.isDeleted !== undefined
-    ) {
-        
-        if (decodedToken.role !== Role.ADMIN ) {
-            throw new AppError(httpStatus.FORBIDDEN, "You are not authorized to update user status");
-        }
-    }
 
     // Hash password if provided
     if (payload.password) {
@@ -228,6 +206,83 @@ async updateUser(userId: string, payload: Partial<IUser>, decodedToken: { role: 
         console.log(`🔒 User ${action}: ${updatedUser.email}`);
         
         return updatedUser;
+    }
+
+    /**
+     * Promotes a user to AGENT role
+     * Admin-only functionality to upgrade user permissions
+     */
+    async promoteToAgent(userId: string) {
+        const objectId = new mongoose.Types.ObjectId(userId);
+        
+        // Find the user first to validate
+        const user = await User.findById(objectId);
+        if (!user) {
+            throw new AppError(httpStatus.NOT_FOUND, "User not found");
+        }
+
+        // Check if user is already an agent
+        if (user.role === Role.AGENT) {
+            throw new AppError(httpStatus.BAD_REQUEST, "User is already an agent");
+        }
+
+        // Check if user is an admin (cannot demote admin to agent)
+        if (user.role === Role.ADMIN) {
+            throw new AppError(httpStatus.BAD_REQUEST, "Cannot demote admin to agent");
+        }
+
+        // Check if user account is active
+        if (user.isActive !== 'ACTIVE') {
+            throw new AppError(httpStatus.BAD_REQUEST, "Cannot promote inactive user to agent");
+        }
+
+        // Check if user account is deleted
+        if (user.isDeleted) {
+            throw new AppError(httpStatus.BAD_REQUEST, "Cannot promote deleted user to agent");
+        }
+
+        // Update user role to AGENT
+        const promotedUser = await User.findByIdAndUpdate(
+            objectId,
+            { role: Role.AGENT },
+            { new: true }
+        ).select('-password');
+
+        if (!promotedUser) {
+            throw new AppError(httpStatus.NOT_FOUND, "User not found");
+        }
+
+        console.log(`🎉 User promoted to agent: ${promotedUser.email}`);
+        return promotedUser;
+    }
+
+    /**
+     * Retrieves all agents in the system
+     * Admin-only functionality to view all agent accounts
+     */
+    async getAllAgents(query: Record<string, string>) {
+        const queryBuilder = new QueryBuilder(
+            User.find({ 
+                role: Role.AGENT,
+                isDeleted: false 
+            }).select('-password'), 
+            query
+        );
+        
+        const agentsData = queryBuilder
+            .filter()
+            .search(['name', 'email'])
+            .sort()
+            .fields()
+            .paginate();
+
+        // Execute query and get metadata in parallel for better performance
+        const [data, meta] = await Promise.all([
+            agentsData.build(),
+            queryBuilder.getMeta()
+        ]);
+
+        return { data, meta };
     }
 }
 
