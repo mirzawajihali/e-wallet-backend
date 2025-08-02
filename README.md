@@ -46,9 +46,11 @@ src/app/
 
 ### **🔐 Authentication** (`/api/v1/auth`)
 ```
-POST /login           # User login
+POST /login           # User login with credentials
 POST /refresh-token   # Generate new access token
-POST /reset-password  # Reset password
+POST /reset-password  # Reset user password (requires auth)
+POST /logout          # User logout
+GET  /google          # Google OAuth login
 ```
 
 ### **👥 User Management** (`/api/v1/users`)
@@ -75,15 +77,16 @@ POST /cash-out       # Cash-out for users
 
 # Admin Operations
 GET  /all            # Get all wallets
-PATCH /:id/block     # Block wallet
-PATCH /:id/unblock   # Unblock wallet
+PATCH /block/:walletId     # Block wallet
+PATCH /unblock/:walletId   # Unblock wallet
 ```
 
 ### **📊 Transactions** (`/api/v1/transactions`)
 ```
-GET /my-transactions # User transaction history
-GET /all            # All transactions (Admin)
-GET /:id            # Transaction details
+GET /my-transactions      # User transaction history
+GET /                    # All transactions (Admin)
+GET /:transactionId      # Transaction details
+GET /stats/overview      # Transaction statistics (Admin)
 ```
 
 ## 🎯 Role Management
@@ -186,11 +189,20 @@ PATCH /api/v1/users/promote-to-admin/:userId
 }
 ```
 
-## 🧪 Testing Examples
+## 🧪 Complete API Testing Guide
 
-### **1. Create User**
+### **🎯 Prerequisites**
+```bash
+# Start the server
+npm run dev
+# Server runs on: http://localhost:5000
+```
+
+### **1. User Registration**
 ```http
-POST /api/v1/users/register
+POST http://localhost:5000/api/v1/users/register
+Content-Type: application/json
+
 {
   "name": "John Doe",
   "email": "john@example.com",
@@ -198,38 +210,132 @@ POST /api/v1/users/register
 }
 ```
 
-### **2. Login & Get Token**
+### **2. User Login**
 ```http
-POST /api/v1/auth/login
+POST http://localhost:5000/api/v1/auth/login
+Content-Type: application/json
+
 {
   "email": "john@example.com",
   "password": "password123"
 }
 ```
+**Save the `accessToken` from response for authenticated requests**
 
-### **3. Add Money to Wallet**
+### **3. Check My Wallet**
 ```http
-POST /api/v1/wallets/add-money
-Authorization: Bearer ACCESS_TOKEN
+GET http://localhost:5000/api/v1/wallets/my-wallet
+Authorization: Bearer YOUR_ACCESS_TOKEN
+```
+
+### **4. Add Money to Wallet**
+```http
+POST http://localhost:5000/api/v1/wallets/add-money
+Authorization: Bearer YOUR_ACCESS_TOKEN
+Content-Type: application/json
+
 {
   "amount": 1000
 }
 ```
 
-### **4. Send Money**
+### **5. Send Money to Another User**
 ```http
-POST /api/v1/wallets/send-money
-Authorization: Bearer ACCESS_TOKEN
+POST http://localhost:5000/api/v1/wallets/send-money
+Authorization: Bearer YOUR_ACCESS_TOKEN
+Content-Type: application/json
+
 {
   "receiverEmail": "recipient@example.com",
   "amount": 500
 }
 ```
 
-### **5. Promote User (Admin Only)**
+### **6. Withdraw Money**
 ```http
-PATCH /api/v1/users/promote-to-agent/:userId
-Authorization: Bearer ADMIN_TOKEN
+POST http://localhost:5000/api/v1/wallets/withdraw
+Authorization: Bearer YOUR_ACCESS_TOKEN
+Content-Type: application/json
+
+{
+  "amount": 200
+}
+```
+
+### **7. Get My Transaction History**
+```http
+GET http://localhost:5000/api/v1/transactions/my-transactions
+Authorization: Bearer YOUR_ACCESS_TOKEN
+```
+
+### **8. Agent Operations (Cash-In)**
+```http
+POST http://localhost:5000/api/v1/wallets/cash-in
+Authorization: Bearer AGENT_ACCESS_TOKEN
+Content-Type: application/json
+
+{
+  "userEmail": "user@example.com",
+  "amount": 1000
+}
+```
+
+### **9. Agent Operations (Cash-Out)**
+```http
+POST http://localhost:5000/api/v1/wallets/cash-out
+Authorization: Bearer AGENT_ACCESS_TOKEN
+Content-Type: application/json
+
+{
+  "userEmail": "user@example.com",
+  "amount": 500
+}
+```
+
+### **10. Admin - View All Users**
+```http
+GET http://localhost:5000/api/v1/users/
+Authorization: Bearer ADMIN_ACCESS_TOKEN
+```
+
+### **11. Admin - View All Wallets**
+```http
+GET http://localhost:5000/api/v1/wallets/all
+Authorization: Bearer ADMIN_ACCESS_TOKEN
+```
+
+### **12. Admin - View All Transactions**
+```http
+GET http://localhost:5000/api/v1/transactions/
+Authorization: Bearer ADMIN_ACCESS_TOKEN
+```
+
+### **13. Admin - Promote User to Agent**
+```http
+PATCH http://localhost:5000/api/v1/users/promote-to-agent/USER_ID
+Authorization: Bearer ADMIN_ACCESS_TOKEN
+```
+
+### **14. Admin - Block User Wallet**
+```http
+PATCH http://localhost:5000/api/v1/wallets/block/WALLET_ID
+Authorization: Bearer ADMIN_ACCESS_TOKEN
+```
+
+### **15. Get Transaction Statistics (Admin)**
+```http
+GET http://localhost:5000/api/v1/transactions/stats/overview
+Authorization: Bearer ADMIN_ACCESS_TOKEN
+```
+
+### **16. Refresh Access Token**
+```http
+POST http://localhost:5000/api/v1/auth/refresh-token
+Content-Type: application/json
+
+{
+  "refreshToken": "YOUR_REFRESH_TOKEN"
+}
 ```
 
 ## 🎉 System Benefits

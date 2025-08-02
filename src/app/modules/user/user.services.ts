@@ -10,10 +10,7 @@ import mongoose from "mongoose";
 import { Wallet } from "../wallet/wallet.model";
 
 class UserService {
-    /**
-     * Creates a new user with automatic wallet creation for USER and AGENT roles
-     * Uses database transactions to ensure data consistency
-     */
+  
     async createUser(payload: Partial<IUser>) {
         const { email, password, ...rest } = payload;
         
@@ -49,26 +46,18 @@ class UserService {
             if (newUser.role === Role.USER || newUser.role === Role.AGENT) {
                 await Wallet.create([{
                     userId: newUser._id,
-                    balance: 50, // Initial bonus ৳50
+                    balance: 50,
                     isBlocked: false
                 }], { session });
-                
-                console.log(`🎉 Wallet created for ${newUser.role}: ${newUser.email}`);
             }
 
-            // Commit transaction if everything succeeds
             await session.commitTransaction();
-            console.log(`✅ User created successfully: ${newUser.email}`);
-            
             return newUser;
 
         } catch (error) {
-            // Rollback transaction on any error
             await session.abortTransaction();
-            console.error('❌ User creation failed:', error);
             throw error;
         } finally {
-            // Always close session
             session.endSession();
         }
     }
@@ -114,10 +103,7 @@ async updateUser(userId: string, payload: Partial<IUser>, decodedToken: { role: 
         return { data, meta };
     }
 
-    /**
-     * Finds a user by email address
-     * Useful for authentication and user lookup operations
-     */
+    
     async getUserByEmail(email: string) {
         const user = await User.findOne({ email });
         if (!user) {
@@ -126,10 +112,6 @@ async updateUser(userId: string, payload: Partial<IUser>, decodedToken: { role: 
         return user;
     }
 
-    /**
-     * Finds a user by ID
-     * Returns user without sensitive information like password
-     */
     async getUserById(userId: string) {
         const objectId = new mongoose.Types.ObjectId(userId);
         const user = await User.findById(objectId).select('-password');
@@ -140,10 +122,7 @@ async updateUser(userId: string, payload: Partial<IUser>, decodedToken: { role: 
         return user;
     }
 
-    /**
-     * Updates user profile information
-     * Excludes sensitive fields like password and authentication data
-     */
+   
     async updateUserProfile(userId: string, updateData: Partial<IUser>) {
         const objectId = new mongoose.Types.ObjectId(userId);
         
@@ -160,14 +139,10 @@ async updateUser(userId: string, payload: Partial<IUser>, decodedToken: { role: 
             throw new AppError(httpStatus.NOT_FOUND, "User not found");
         }
 
-        console.log(`✅ User profile updated: ${updatedUser.email}`);
         return updatedUser;
     }
 
-    /**
-     * Soft delete user account
-     * Marks user as deleted instead of permanently removing from database
-     */
+    
     async deleteUser(userId: string) {
         const objectId = new mongoose.Types.ObjectId(userId);
         
@@ -185,10 +160,7 @@ async updateUser(userId: string, payload: Partial<IUser>, decodedToken: { role: 
         return deletedUser;
     }
 
-    /**
-     * Block/unblock user account
-     * Admin functionality to manage user access
-     */
+    
     async toggleUserBlock(userId: string, isBlocked: boolean) {
         const objectId = new mongoose.Types.ObjectId(userId);
         
@@ -208,10 +180,7 @@ async updateUser(userId: string, payload: Partial<IUser>, decodedToken: { role: 
         return updatedUser;
     }
 
-    /**
-     * Promotes a user to AGENT role
-     * Admin-only functionality to upgrade user permissions
-     */
+ 
     async promoteToAgent(userId: string) {
         const objectId = new mongoose.Types.ObjectId(userId);
         
@@ -299,10 +268,7 @@ async updateUser(userId: string, payload: Partial<IUser>, decodedToken: { role: 
         return promotedUser;
     }
 
-    /**
-     * Retrieves all agents in the system
-     * Admin-only functionality to view all agent accounts
-     */
+
     async getAllAgents(query: Record<string, string>) {
         const queryBuilder = new QueryBuilder(
             User.find({ 
@@ -319,7 +285,7 @@ async updateUser(userId: string, payload: Partial<IUser>, decodedToken: { role: 
             .fields()
             .paginate();
 
-        // Execute query and get metadata in parallel for better performance
+       
         const [data, meta] = await Promise.all([
             agentsData.build(),
             queryBuilder.getMeta()

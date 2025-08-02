@@ -9,10 +9,6 @@ import { QueryBuilder } from "../../utils/QuaryBuilder";
 
 class WalletService {
     async getMyWallet(userId: mongoose.Types.ObjectId) {
-      
-        // Convert string to ObjectId for proper MongoDB query
-        
-       
         const wallet = await Wallet.findOne({ userId }).populate('userId', 'name email role');
         
         if (!wallet) {
@@ -25,8 +21,6 @@ class WalletService {
         const session = await mongoose.startSession();
         try {
             session.startTransaction();
-            
-            // Convert string to ObjectId
             
             const wallet = await Wallet.findOne({ userId }).session(session);
             
@@ -47,11 +41,9 @@ class WalletService {
             }], { session });
 
             await session.commitTransaction();
-            console.log(`✅ Added ৳${amount} to wallet for user ${userId}`);
             return wallet;
         } catch (error) {
             await session.abortTransaction();
-            console.error('❌ Failed to add money to wallet:', error);
             throw error;
         } finally {
             session.endSession();
@@ -64,8 +56,6 @@ class WalletService {
         try {
             session.startTransaction();
             
-            // Convert string to ObjectId
-           
             const wallet = await Wallet.findOne({ userId }).session(session);
             
             if (!wallet) {
@@ -89,11 +79,9 @@ class WalletService {
             }], { session });
 
             await session.commitTransaction();
-            console.log(`✅ Money withdrawn: ${amount} from user ${userId}`);
             return wallet;
         } catch (error) {
             await session.abortTransaction();
-            console.error('❌ Failed to withdraw money from wallet:', error);
             throw error;
         } finally {
             session.endSession();
@@ -105,7 +93,6 @@ class WalletService {
         try {
             session.startTransaction();
             
-           
             const toUser = await User.findOne({ email: toUserEmail }).session(session);
             if (!toUser) {
                 throw new AppError(httpStatus.NOT_FOUND, "Receiver not found");
@@ -122,7 +109,6 @@ class WalletService {
                 throw new AppError(httpStatus.BAD_REQUEST, 'Insufficient balance');
             }
             
-            // Update balances
             fromWallet.balance -= amount;
             toWallet.balance += amount;
             
@@ -140,11 +126,9 @@ class WalletService {
             }], { session });
 
             await session.commitTransaction();
-            console.log(`✅ Money sent: ${amount} from user ${fromUserId} to user ${toUserEmail}`);
             return { fromWallet, toWallet };
         } catch (error) {
             await session.abortTransaction();
-            console.error('❌ Failed to send money:', error);
             throw error;
         } finally {
             session.endSession();
@@ -158,7 +142,6 @@ class WalletService {
         try {
             session.startTransaction();
             
-        
             const user = await User.findOne({ email: userEmail }).session(session);
             if (!user) {
                 throw new AppError(httpStatus.NOT_FOUND, "User not found");
@@ -182,11 +165,9 @@ class WalletService {
             }], { session });
 
             await session.commitTransaction();
-            console.log(`✅ Cash in of ৳${amount} for user ${userEmail} by agent ${agentId}`);
             return userWallet;
         } catch (error) {
             await session.abortTransaction();
-            console.error('❌ Failed to cash in:', error);
             throw error;
         } finally {
             session.endSession();
@@ -197,7 +178,6 @@ class WalletService {
         try {
             session.startTransaction();
 
-            // Convert string to ObjectId
             const user = await User.findOne({ email: userEmail }).session(session);
             if (!user) {
                 throw new AppError(httpStatus.NOT_FOUND, "User not found");
@@ -225,19 +205,15 @@ class WalletService {
             }], { session });
 
             await session.commitTransaction();
-            console.log(`✅ Cash out of ৳${amount} for user ${userEmail} by agent ${agentId}`);
             return userWallet;
         } catch (error) {
             await session.abortTransaction();
-            console.error('❌ Failed to cash out:', error);
             throw error;
         } finally {
             session.endSession();
         }
     }
 
-
-            // Admin: Get all wallets
     async getAllWallets(query: Record<string, string>) {
         const queryBuilder = new QueryBuilder(
             Wallet.find().populate('userId', 'name email role'), 
@@ -269,7 +245,6 @@ class WalletService {
             throw new AppError(httpStatus.NOT_FOUND, 'Wallet not found');
         }
         
-        console.log(` Wallet blocked: ${walletId}`);
         return wallet;
 
     }
@@ -285,14 +260,7 @@ class WalletService {
             throw new AppError(httpStatus.NOT_FOUND, 'Wallet not found');
         }
         
-        console.log(`✅ Wallet unblocked: ${walletId}`);
         return wallet;
     }
-    
-
-        }
-
-
-
-        
+}
 export const walletService = new WalletService();
