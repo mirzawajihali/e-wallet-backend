@@ -42,6 +42,18 @@ const promoteToAgent = catchAsync(async (req: Request, res: Response, next: Next
     });
 })
 
+const promoteToAdmin = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    const { userId } = req.params;
+    const promotedUser = await userService.promoteToAdmin(userId);
+
+    sendResponse(res, {
+        success: true,
+        statusCode: httpStatus.OK,
+        message: "User promoted to admin successfully",
+        data: promotedUser,
+    });
+})
+
 const getAllAgents = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     const query = req.query;
     const result = await userService.getAllAgents(query as Record<string, string>);
@@ -73,6 +85,7 @@ export const userController = {
     createUser,
     updateUser,
     promoteToAgent,
-    getAllAgents,    // Added the getAllAgents method
+    promoteToAdmin,   // Added the promoteToAdmin method
+    getAllAgents,
     getAllUsers
 }

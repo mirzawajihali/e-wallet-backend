@@ -257,6 +257,49 @@ async updateUser(userId: string, payload: Partial<IUser>, decodedToken: { role: 
     }
 
     /**
+     * Promotes a user to ADMIN role
+     * Super Admin functionality to grant admin permissions
+     */
+    async promoteToAdmin(userId: string) {
+        const objectId = new mongoose.Types.ObjectId(userId);
+        
+        // Find the user first to validate
+        const user = await User.findById(objectId);
+        if (!user) {
+            throw new AppError(httpStatus.NOT_FOUND, "User not found");
+        }
+
+        // Check if user is already an admin
+        if (user.role === Role.ADMIN) {
+            throw new AppError(httpStatus.BAD_REQUEST, "User is already an admin");
+        }
+
+        // Check if user account is active
+        if (user.isActive !== 'ACTIVE') {
+            throw new AppError(httpStatus.BAD_REQUEST, "Cannot promote inactive user to admin");
+        }
+
+        // Check if user account is deleted
+        if (user.isDeleted) {
+            throw new AppError(httpStatus.BAD_REQUEST, "Cannot promote deleted user to admin");
+        }
+
+        // Update user role to ADMIN
+        const promotedUser = await User.findByIdAndUpdate(
+            objectId,
+            { role: Role.ADMIN },
+            { new: true }
+        ).select('-password');
+
+        if (!promotedUser) {
+            throw new AppError(httpStatus.NOT_FOUND, "User not found");
+        }
+
+        console.log(`👑 User promoted to admin: ${promotedUser.email}`);
+        return promotedUser;
+    }
+
+    /**
      * Retrieves all agents in the system
      * Admin-only functionality to view all agent accounts
      */
