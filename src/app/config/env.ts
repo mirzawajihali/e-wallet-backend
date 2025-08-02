@@ -12,13 +12,16 @@ interface EnvConfig {
     JWT_ACCESS_EXPIRES: string;
     JWT_REFRESH_SECRET: string;
     JWT_REFRESH_EXPIRES: string; 
-    FRONTEND_URL?: string; // Optional, as it may not be defined in all environments
+    FRONTEND_URL?: string;
+    MAIN_ADMIN_EMAIL?: string;
+    MAIN_ADMIN_PASSWORD?: string; // Added for Main Admin credentials
+     // Optional, as it may not be defined in all environments
     // Optional, as it may not be defined in all environments
 }
 
 
 const loadEnvVariables = () : EnvConfig => {
-    const requiredEnvVars : string [] = ['PORT', 'MONGO_URI', 'NODE_ENV', 'BCRYPT_SALT_ROUNDS', "GOOGLE_CALLBACK_URL", "GOOGLE_CLIENT_SECRET", "GOOGLE_CLIENT_ID", 'JWT_ACCESS_SECRET', 'JWT_ACCESS_EXPIRES', 'JWT_REFRESH_SECRET', 'JWT_REFRESH_EXPIRES', 'FRONTEND_URL'];
+    const requiredEnvVars : string [] = ['PORT', 'MONGO_URI', 'NODE_ENV', 'BCRYPT_SALT_ROUNDS', "GOOGLE_CALLBACK_URL", "GOOGLE_CLIENT_SECRET", "GOOGLE_CLIENT_ID", 'JWT_ACCESS_SECRET', 'JWT_ACCESS_EXPIRES', 'JWT_REFRESH_SECRET', 'JWT_REFRESH_EXPIRES', 'FRONTEND_URL', 'MAIN_ADMIN_EMAIL', 'MAIN_ADMIN_PASSWORD'];
 
     requiredEnvVars.forEach((envVar) =>{
         if(!process.env[envVar]){
@@ -39,7 +42,9 @@ const loadEnvVariables = () : EnvConfig => {
         JWT_ACCESS_EXPIRES: process.env.JWT_ACCESS_EXPIRES as string,
         JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET as string,
         JWT_REFRESH_EXPIRES: process.env.JWT_REFRESH_EXPIRES as string,
-        FRONTEND_URL: process.env.FRONTEND_URL as string
+        FRONTEND_URL: process.env.FRONTEND_URL as string,
+        MAIN_ADMIN_EMAIL: process.env.MAIN_ADMIN_EMAIL as string,
+        MAIN_ADMIN_PASSWORD: process.env.MAIN_ADMIN_PASSWORD as string, // Added for Main Admin
     }
 }
 
