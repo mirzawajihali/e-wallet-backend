@@ -73,10 +73,50 @@ class UserService {
         }
     }
 
-    /**
-     * Retrieves all users with advanced filtering, searching, sorting, and pagination
-     * Supports query parameters for flexible data retrieval
-     */
+
+async updateUser(userId: string, payload: Partial<IUser>, decodedToken: { role: Role; user_id: string }) {
+    const ifUserExist = await User.findById(userId);
+
+    if (!ifUserExist) {
+        throw new AppError(httpStatus.NOT_FOUND, "User not found");
+    }
+
+    // Role update authorization
+    if (payload.role) {
+        // Only SUPER_ADMIN can update roles
+        if (decodedToken.role !== Role.ADMIN) {
+            throw new AppError(httpStatus.FORBIDDEN, "Only Super Admin can update user roles");
+        }
+
+        // Prevent SUPER_ADMIN from downgrading themselves
+        if (decodedToken.user_id === userId && payload.role !== Role.ADMIN) {
+            throw new AppError(httpStatus.FORBIDDEN, "Super Admin cannot downgrade their own role");
+        }
+    }
+
+    // Status update authorization (isActive, isVarified, isDeleted)
+    if (
+        payload.isActive !== undefined ||
+        payload.isVarified !== undefined ||
+        payload.isDeleted !== undefined
+    ) {
+        
+        if (decodedToken.role !== Role.ADMIN ) {
+            throw new AppError(httpStatus.FORBIDDEN, "You are not authorized to update user status");
+        }
+    }
+
+    // Hash password if provided
+    if (payload.password) {
+        payload.password = await bcryptjs.hash(payload.password as string, Number(env.BCRYPT_SALT_ROUNDS));
+    }
+
+    const newUpdateUser = await User.findByIdAndUpdate(userId, payload, { new: true, runValidators: true });
+
+    return newUpdateUser;
+}
+          
+
     async getAllUsers(query: Record<string, string>) {
         const queryBuilder = new QueryBuilder(User.find(), query);
         

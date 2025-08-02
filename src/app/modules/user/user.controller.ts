@@ -19,6 +19,17 @@ const createUser = catchAsync(async (req: Request, res: Response, next: NextFunc
     })
 })
 
+const updateUser = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    const user = await userService.updateUserProfile(req.params.id, req.body);  // Fixed method name
+
+    sendResponse(res, {
+        success: true,
+        statusCode: httpStatus.OK,
+        message: "User Updated Successfully",
+        data: user,
+    });
+})
+
 const getAllUsers = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     const query = req.query;
     const result = await userService.getAllUsers(query as Record<string, string>);  // Updated method call
@@ -35,4 +46,6 @@ const getAllUsers = catchAsync(async (req: Request, res: Response, next: NextFun
 
 export const userController = {
     createUser,
-getAllUsers }
+    updateUser,  // Added the missing updateUser method
+    getAllUsers
+}
