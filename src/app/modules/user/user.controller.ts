@@ -72,16 +72,11 @@ const getMe = catchAsync(async (req: Request, res: Response, next: NextFunction)
     const decodedToken = req.user as JwtPayload
     const result = await userService.getMe(decodedToken.userId);
 
-    // res.status(httpStatus.OK).json({
-    //     success: true,
-    //     message: "All Users Retrieved Successfully",
-    //     data: users
-    // })
     sendResponse(res, {
         success: true,
-        statusCode: httpStatus.CREATED,
+        statusCode: httpStatus.OK,
         message: "Your profile Retrieved Successfully",
-        data: result.data
+        data: result
     })
 })
 
@@ -92,7 +87,7 @@ const getAllUsers = catchAsync(async (req: Request, res: Response, next: NextFun
   
     sendResponse(res, {
         success: true,
-        statusCode: httpStatus.CREATED,
+        statusCode: httpStatus.OK,
         message: "All Users Retrieved Successfully",
         data: result.data,
         meta: result.meta

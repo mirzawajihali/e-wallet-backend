@@ -295,11 +295,12 @@ async updateUser(userId: string, payload: Partial<IUser>, decodedToken: { role: 
     }
 
     async getMe(userId: string) {
-    const user = await User.findById(userId).select("-password");
-    return {
-        data: user
+        const user = await User.findById(userId).select("-password");
+        if (!user) {
+            throw new AppError(httpStatus.NOT_FOUND, "User not found");
+        }
+        return user;
     }
-};
 }
 
 // Export singleton instance
