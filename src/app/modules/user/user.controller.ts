@@ -1,3 +1,4 @@
+import { JwtPayload } from "jsonwebtoken";
 import { catchAsync } from "../../utils/catchAsync"
 import { sendResponse } from "../../utils/sendResponse"
 import { userService } from "./user.services"  // Updated import to use singleton instance
@@ -67,6 +68,23 @@ const getAllAgents = catchAsync(async (req: Request, res: Response, next: NextFu
     })
 })
 
+const getMe = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    const decodedToken = req.user as JwtPayload
+    const result = await userService.getMe(decodedToken.userId);
+
+    // res.status(httpStatus.OK).json({
+    //     success: true,
+    //     message: "All Users Retrieved Successfully",
+    //     data: users
+    // })
+    sendResponse(res, {
+        success: true,
+        statusCode: httpStatus.CREATED,
+        message: "Your profile Retrieved Successfully",
+        data: result.data
+    })
+})
+
 const getAllUsers = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     const query = req.query;
     const result = await userService.getAllUsers(query as Record<string, string>);  // Updated method call
@@ -87,5 +105,6 @@ export const userController = {
     promoteToAgent,
     promoteToAdmin,   // Added the promoteToAdmin method
     getAllAgents,
-    getAllUsers
+    getAllUsers,
+    getMe
 }

@@ -293,6 +293,13 @@ async updateUser(userId: string, payload: Partial<IUser>, decodedToken: { role: 
 
         return { data, meta };
     }
+
+    async getMe(userId: string) {
+    const user = await User.findById(userId).select("-password");
+    return {
+        data: user
+    }
+};
 }
 
 // Export singleton instance
