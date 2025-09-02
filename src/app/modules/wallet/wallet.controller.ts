@@ -6,7 +6,7 @@ import { sendResponse } from '../../utils/sendResponse';
 
 const getMyWallet = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const userId = (req as any).user?.user_id ; // Fix: Use user_id from JWT payload
+        const userId = (req as any).user?.userId ; // Fix: Use userId from JWT payload
         const result = await walletService.getMyWallet(userId);
         
        sendResponse(res, {
@@ -22,7 +22,7 @@ const getMyWallet = async (req: Request, res: Response, next: NextFunction) => {
 
 const addMoney = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const userId = (req as any).user?.user_id; // Fix: Use user_id from JWT payload
+        const userId = (req as any).user?.userId; // Fix: Use userId from JWT payload
         const { amount } = req.body;
         
         const result = await walletService.addMoney(userId, amount);
@@ -40,7 +40,7 @@ const addMoney = async (req: Request, res: Response, next: NextFunction) => {
 
 const withdraw = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const userId = (req as any).user?.user_id; // Fix: Use user_id from JWT payload
+        const userId = (req as any).user?.userId; // Fix: Use userId from JWT payload
         const { amount } = req.body;
         
         const result = await walletService.withdrawMoney(userId, amount);
@@ -58,7 +58,7 @@ const withdraw = async (req: Request, res: Response, next: NextFunction) => {
 
 const sendMoney = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const userId =(req as any).user?.user_id; // Fix: Use user_id from JWT payload
+        const userId =(req as any).user?.userId; // Fix: Use userId from JWT payload
         const { receiverEmail, amount } = req.body;
         
         const result = await walletService.sendMoney(userId, receiverEmail, amount);
@@ -76,7 +76,7 @@ const sendMoney = async (req: Request, res: Response, next: NextFunction) => {
 
 const cashIn = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const agentId = (req as any).user?.user_id; // Fix: Use user_id from JWT payload
+        const agentId = (req as any).user?.userId; // Fix: Use userId from JWT payload
         const { userEmail, amount } = req.body;
         
         const result = await walletService.cashIn(agentId, userEmail, amount);
@@ -94,7 +94,7 @@ const cashIn = async (req: Request, res: Response, next: NextFunction) => {
 
 const cashOut = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const agentId = (req as any).user?.user_id; // Fix: Use user_id from JWT payload
+        const agentId = (req as any).user?.userId; // Fix: Use userId from JWT payload
         const { userEmail, amount } = req.body;
         
         const result = await walletService.CashOut(agentId, userEmail, amount); // Fixed capitalization

@@ -5,7 +5,7 @@ import httpStatus from 'http-status-codes';
 
         const getMyTransaction = async(req : Request, res: Response, next : NextFunction) => {
             try{
-                const userId = (req as any).user._id;
+                const userId = (req as any).user.userId;
             const query = req.query as Record<string, string>;
                 const result = await transactionServices.getMyTransactions(userId, query);
 
@@ -49,7 +49,7 @@ import httpStatus from 'http-status-codes';
         const getTransactionById = async (req: Request, res: Response, next: NextFunction) => {
              try {
         const { transactionId } = req.params;
-        const userId = (req as any).user?.role === 'ADMIN' ? undefined : (req as any).user?._id;
+        const userId = (req as any).user?.role === 'ADMIN' ? undefined : (req as any).user?.userId;
         
         const result = await transactionServices.getTransactionById(transactionId, userId);
         
