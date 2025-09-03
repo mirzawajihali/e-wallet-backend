@@ -4,19 +4,32 @@ import { sendResponse } from "../../utils/sendResponse"
 import { userService } from "./user.services"  // Updated import to use singleton instance
 import { NextFunction, Request, Response } from "express";
 import httpStatus from "http-status-codes";
+import { createUserTokens } from "../../utils/UserTokens";
+import { setAuthCookie } from "../../utils/AuthCookie";
 
 
 
 const createUser = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     const user = await userService.createUser(req.body)  // Updated method call
 
+    // Generate authentication tokens for the new user
+    const userTokens = createUserTokens(user);
     
+    // Set authentication cookies
+    setAuthCookie(res, userTokens);
+    
+    // Remove password from response
+    const { password, ...userWithoutPassword } = user.toObject();
 
     sendResponse(res, {
         success: true,
         statusCode: httpStatus.CREATED,
-        message: "User Created Successfully",
-        data : user,
+        message: "User Created and Logged In Successfully",
+        data: {
+            accessToken: userTokens.accessToken,
+            refreshToken: userTokens.refreshToken,
+            user: userWithoutPassword,
+        },
     })
 })
 

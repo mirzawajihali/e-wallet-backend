@@ -12,8 +12,8 @@ import { Wallet } from "../wallet/wallet.model";
 class UserService {
   
     async createUser(payload: Partial<IUser>) {
-        const { email, password, ...rest } = payload;
-        
+        const { email, password, role, ...rest } = payload;
+
         // Check if user already exists
         const isUserExist = await User.findOne({ email });
         if (isUserExist) {
@@ -39,6 +39,7 @@ class UserService {
                 email,
                 password: hashedPassword,
                 auths: [authProvider],
+                role ,
                 ...rest
             }], { session });
 

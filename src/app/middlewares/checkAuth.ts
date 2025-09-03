@@ -10,7 +10,20 @@ import httpStatus from "http-status-codes";
 
 export const checkAuth  = (...authRoles : string[]) => async (req: Request, res: Response, next: NextFunction) =>{
    try{
-      const accessToken = req.headers.authorization || req.cookies.accessToken ;
+      // Extract token from Authorization header or cookies
+      let accessToken = req.cookies.accessToken; // First try cookies
+      
+      // If no cookie token, try Authorization header
+      if (!accessToken && req.headers.authorization) {
+        const authHeader = req.headers.authorization;
+        // Check if it starts with "Bearer "
+        if (authHeader.startsWith('Bearer ')) {
+          accessToken = authHeader.substring(7); // Remove "Bearer " prefix
+        } else {
+          accessToken = authHeader; // Use as-is if no Bearer prefix
+        }
+      }
+      
     if(!accessToken) {
         throw new AppError(403, "No token received")
     }

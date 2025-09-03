@@ -22,14 +22,13 @@ class transactionService {
         return wallets.map(wallet => wallet._id);
     }
    async getMyTransactions(userId : string, query : Record<string, string>) {
-        console.log('🔍 getMyTransactions called with userId:', userId);
-        console.log('🔍 userId type:', typeof userId);
+        
         
         const userObjectId = new mongoose.Types.ObjectId(userId);
-        console.log('🔍 userObjectId:', userObjectId);
+        
         
         const userWalletIds = await this.getUserWalletIds(userId);
-        console.log('🔍 userWalletIds:', userWalletIds);
+        
         
         // Build user-specific filter that must always be applied
         const userFilter = { 
@@ -53,17 +52,17 @@ class transactionService {
             
         console.log('🔍 Final MongoDB query filter:', JSON.stringify(finalFilter, null, 2));
         
-        // Use Transaction.find with the complete filter, then apply other QueryBuilder methods
+      
         let transactionQuery = Transaction.find(finalFilter)
             .populate('fromWallet', 'balance')
             .populate('toWallet', 'balance')
             .populate('initiatedBy', 'name email role');
             
-        // Apply sorting
+        
         const sort = query.sort || "-createdAt";
         transactionQuery = transactionQuery.sort(sort);
         
-        // Apply field selection
+        
         if (query.fields) {
             const fields = query.fields.split(",").join(" ");
             transactionQuery = transactionQuery.select(fields);
