@@ -124,11 +124,30 @@ async updateUser(userId: string, payload: Partial<IUser>, decodedToken: { role: 
     }
 
    
-    async updateUserProfile(userId: string, updateData: Partial<IUser>) {
-        const objectId = new mongoose.Types.ObjectId(userId);
+    async updateUserProfile(userId: any, updateData: Partial<IUser>) {
+        console.log('🔍 updateUserProfile called with userId:', userId, 'type:', typeof userId);
+        
+        let objectId: mongoose.Types.ObjectId;
+        
+        // Handle different userId formats
+        if (typeof userId === 'string') {
+            // Validate that userId is a valid ObjectId string
+            if (!mongoose.Types.ObjectId.isValid(userId)) {
+                throw new AppError(httpStatus.BAD_REQUEST, "Invalid user ID format");
+            }
+            objectId = new mongoose.Types.ObjectId(userId);
+        } else if (mongoose.Types.ObjectId.isValid(userId as any)) {
+            // If it's already an ObjectId, use it directly
+            objectId = userId as mongoose.Types.ObjectId;
+        } else {
+            throw new AppError(httpStatus.BAD_REQUEST, "Invalid user ID type");
+        }
+        
+        console.log('🔍 ObjectId created:', objectId);
         
         // Remove sensitive fields that shouldn't be updated directly
-        const { password, auths, _id, ...allowedUpdates } = updateData;
+        const {email, password, auths, _id, ...allowedUpdates } = updateData;
+        console.log('🔍 Allowed updates:', allowedUpdates);
         
         const updatedUser = await User.findByIdAndUpdate(
             objectId,
@@ -140,6 +159,7 @@ async updateUser(userId: string, payload: Partial<IUser>, decodedToken: { role: 
             throw new AppError(httpStatus.NOT_FOUND, "User not found");
         }
 
+        console.log('✅ User updated successfully:', updatedUser.email);
         return updatedUser;
     }
 

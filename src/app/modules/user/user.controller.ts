@@ -93,6 +93,22 @@ const getMe = catchAsync(async (req: Request, res: Response, next: NextFunction)
     })
 })
 
+const updateMe = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    const decodedToken = req.user as JwtPayload;
+    console.log('🔍 updateMe - decodedToken:', decodedToken);
+    console.log('🔍 updateMe - userId:', decodedToken.userId, 'type:', typeof decodedToken.userId);
+    console.log('🔍 updateMe - req.body:', req.body);
+    
+    const result = await userService.updateUserProfile(decodedToken.userId, req.body);
+
+    sendResponse(res, {
+        success: true,
+        statusCode: httpStatus.OK,
+        message: "Your profile updated successfully",
+        data: result
+    });
+})
+
 const getAllUsers = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     const query = req.query;
     const result = await userService.getAllUsers(query as Record<string, string>);  // Updated method call
@@ -114,5 +130,6 @@ export const userController = {
     promoteToAdmin,   // Added the promoteToAdmin method
     getAllAgents,
     getAllUsers,
-    getMe
+    getMe,
+    updateMe
 }
