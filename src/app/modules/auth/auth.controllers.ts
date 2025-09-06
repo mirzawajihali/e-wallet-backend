@@ -98,7 +98,7 @@ const logout =  catchAsync(async (req: Request, res: Response, next: NextFunctio
     
     sendResponse(res, {
         success: true,
-        statusCode: httpStatus.CREATED,
+        statusCode: httpStatus.OK,
         message: "Log out Successfully",
         data : null,
     })
@@ -126,22 +126,33 @@ const resetPassword =  catchAsync(async (req: Request, res: Response, next: Next
 })
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const googleCallbackController =  catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-    
-
     let redirectTo = req.query.state ? req.query.state as string : "" as string;
 
     if(redirectTo.startsWith("/")){
         redirectTo = redirectTo.slice(1);
     }
    
-    const user = req.user;
+    const user = req.user as any; // Google OAuth user from passport
     if(!user){
         throw new AppError(httpStatus.BAD_REQUEST, "User not found");
     }
-    const tokenInfo =  createUserTokens(user );
+    
+    const tokenInfo = createUserTokens(user);
     setAuthCookie(res, tokenInfo);
 
-    res.redirect(`${env.FRONTEND_URL}/${redirectTo}`); // Redirect to the frontend with tokens
+    // Instead of just redirecting, pass tokens as URL parameters for the frontend to handle
+    const callbackUrl = new URL(`${env.FRONTEND_URL}/auth/google/callback`);
+    callbackUrl.searchParams.set('accessToken', tokenInfo.accessToken);
+    callbackUrl.searchParams.set('refreshToken', tokenInfo.refreshToken);
+    callbackUrl.searchParams.set('role', user.role || '');
+    callbackUrl.searchParams.set('name', user.name || '');
+    callbackUrl.searchParams.set('email', user.email || '');
+    
+    if (redirectTo) {
+        callbackUrl.searchParams.set('redirect', redirectTo);
+    }
+
+    res.redirect(callbackUrl.toString());
 })
 
 export const AuthControllers = {
